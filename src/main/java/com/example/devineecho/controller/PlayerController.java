@@ -56,4 +56,21 @@ public class PlayerController {
         return ResponseEntity.ok(player);
     }
 
+    @PostMapping("/reset")
+    public ResponseEntity<Player> resetPlayerData() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        Player player = playerService.resetPlayerData(username);
+        return ResponseEntity.ok(player);
+    }
+
+    @GetMapping("/load")
+    public ResponseEntity<Player> loadPlayerData() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        return playerService.loadPlayerData(username)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
 }

@@ -45,6 +45,22 @@ public class PlayerService implements UserDetailsService {
         playerRepository.save(player);
     }
 
+    public Player resetPlayerData(String username) {
+        Player player = playerRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+
+        player.setLevel(1);
+        player.setExperience(0);
+        player.setCurrentStage(1);
+        player.getSkills().clear();
+
+        return playerRepository.save(player);
+    }
+
+    public Optional<Player> loadPlayerData(String username) {
+        return playerRepository.findByUsername(username);
+    }
+
     public Optional<Player> findByUsername(String username) {
         return playerRepository.findByUsername(username);
     }
