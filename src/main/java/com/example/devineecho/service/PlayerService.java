@@ -1,6 +1,7 @@
 package com.example.devineecho.service;
 
 import com.example.devineecho.model.Player;
+import com.example.devineecho.model.StageCompleteRequest;
 import com.example.devineecho.repository.PlayerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -69,5 +70,15 @@ public class PlayerService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return playerRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+    }
+
+    public void completeStage(StageCompleteRequest request) {
+        Player player = playerRepository.findById(request.getPlayerId())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        // 스테이지 완료 로직 (경험치 추가, 스테이지 업데이트 등)
+        player.setExperience(player.getExperience() + request.getExp());
+        player.setCurrentStage(request.getStage());
+        playerRepository.save(player);
     }
 }

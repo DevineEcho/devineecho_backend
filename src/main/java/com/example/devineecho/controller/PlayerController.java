@@ -1,6 +1,7 @@
 package com.example.devineecho.controller;
 
 import com.example.devineecho.model.Player;
+import com.example.devineecho.model.StageCompleteRequest;
 import com.example.devineecho.service.PlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -72,5 +73,13 @@ public class PlayerController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+
+    @PostMapping("/stage-complete")
+    public ResponseEntity<String> completeStage(@RequestBody StageCompleteRequest request) {
+        playerService.completeStage(request);
+        return ResponseEntity.ok("Stage complete data saved!");
+    }
+
 
 }
