@@ -36,26 +36,26 @@ public class Player implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(); // 권한이 없으면 빈 리스트 반환
+        return List.of();
     }
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // 계정 만료 여부 (true로 설정)
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // 계정 잠금 여부 (true로 설정)
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // 자격 증명 만료 여부 (true로 설정)
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return true; // 계정 활성화 여부 (true로 설정)
+        return true;
     }
 }

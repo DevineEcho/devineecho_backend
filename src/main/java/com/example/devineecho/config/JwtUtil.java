@@ -25,22 +25,18 @@ public class JwtUtil {
                 .compact();
     }
 
-    // 토큰에서 사용자 이름 추출
     public String extractUsername(String token) {
         return getClaims(token).getSubject();
     }
 
-    // 토큰 유효성 검사
     public boolean isTokenValid(String token, String username) {
         return (username.equals(extractUsername(token)) && !isTokenExpired(token));
     }
 
-    // 토큰 만료 여부 확인
     private boolean isTokenExpired(String token) {
         return getClaims(token).getExpiration().before(new Date());
     }
 
-    // Claims 추출
     private Claims getClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(SECRET_KEY)

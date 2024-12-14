@@ -76,7 +76,6 @@ public class PlayerService implements UserDetailsService {
         Player player = playerRepository.findById(request.getPlayerId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // 스테이지 완료 로직 (경험치 추가, 스테이지 업데이트 등)
         player.setExperience(player.getExperience() + request.getExp());
         player.setCurrentStage(request.getStage());
         playerRepository.save(player);

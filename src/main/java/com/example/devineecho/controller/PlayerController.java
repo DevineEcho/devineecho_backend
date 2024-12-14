@@ -49,13 +49,14 @@ public class PlayerController {
 
     @GetMapping("/profile")
     public ResponseEntity<Player> getProfile() {
-        // 현재 인증된 사용자 정보 가져오기
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         Player player = playerService.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
         return ResponseEntity.ok(player);
     }
+
 
     @PostMapping("/reset")
     public ResponseEntity<Player> resetPlayerData() {
