@@ -42,7 +42,7 @@ public class PlayerService implements UserDetailsService {
     }
 
     public void signup(Player player) {
-        player.setPassword(passwordEncoder.encode(player.getPassword()));
+        player.encodeAndSetPassword(player.getPassword(), passwordEncoder);
         playerRepository.save(player);
     }
 
@@ -50,11 +50,7 @@ public class PlayerService implements UserDetailsService {
         Player player = playerRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        player.setLevel(1);
-        player.setExperience(0);
-        player.setCurrentStage(1);
-        player.getSkills().clear();
-
+        player.resetPlayerData();
         return playerRepository.save(player);
     }
 
@@ -76,8 +72,8 @@ public class PlayerService implements UserDetailsService {
         Player player = playerRepository.findById(request.getPlayerId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        player.setExperience(player.getExperience() + request.getExp());
-        player.setCurrentStage(request.getStage());
+        player.updateStageProgress(request.getLevel(), request.getExp(), request.getStage());
         playerRepository.save(player);
     }
+
 }

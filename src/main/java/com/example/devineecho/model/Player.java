@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Collection;
 import java.util.List;
@@ -40,22 +41,37 @@ public class Player implements UserDetails {
     }
 
     @Override
-    public boolean isAccountNonExpired() {
-        return true;
+    public String getPassword() {
+        return this.password;
     }
 
     @Override
-    public boolean isAccountNonLocked() {
-        return true;
+    public String getUsername() {
+        return this.username;
     }
 
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
+    public void encodeAndSetPassword(String rawPassword, PasswordEncoder passwordEncoder) {
+        if (rawPassword == null || rawPassword.isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be null or empty");
+        }
+        this.password = passwordEncoder.encode(rawPassword);
     }
 
-    @Override
-    public boolean isEnabled() {
-        return true;
+    public void resetPlayerData() {
+        this.level = 1;
+        this.experience = 0;
+        this.currentStage = 1;
+        if (this.skills != null) {
+            this.skills.clear();
+        }
+    }
+
+    public void updateStageProgress(int level, int additionalExperience, int newStage) {
+        if (level <= 0 || additionalExperience < 0 || newStage <= 0) {
+            throw new IllegalArgumentException("Invalid stage progress data");
+        }
+        this.level = level;
+        this.experience += additionalExperience;
+        this.currentStage = newStage;
     }
 }

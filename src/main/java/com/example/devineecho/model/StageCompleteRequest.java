@@ -1,11 +1,14 @@
 package com.example.devineecho.model;
 
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class StageCompleteRequest {
     private Long playerId;
-    private int health;
+    private int level;
     private int exp;
     private int stage;
 }

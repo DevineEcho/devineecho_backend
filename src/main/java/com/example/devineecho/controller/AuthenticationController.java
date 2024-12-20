@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
@@ -28,11 +29,16 @@ public class AuthenticationController {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private final PasswordEncoder passwordEncoder;
+
     @Autowired
-    public AuthenticationController(PlayerService playerService, JwtUtil jwtUtil, AuthenticationManager authenticationManager) {
+    public AuthenticationController(PlayerService playerService, JwtUtil jwtUtil,
+                                    AuthenticationManager authenticationManager,
+                                    PasswordEncoder passwordEncoder) {
         this.playerService = playerService;
         this.jwtUtil = jwtUtil;
         this.authenticationManager = authenticationManager;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/signup")
@@ -126,8 +132,8 @@ public class AuthenticationController {
     private Player registerNewKakaoUser(String username) {
         Player player = new Player();
         player.setUsername(username);
-        player.setPassword("");
-        playerService.savePlayer(player);
-        return player;
+        player.encodeAndSetPassword("", passwordEncoder); // 비밀번호는 빈 값으로 설정
+        return playerService.savePlayer(player);
     }
+
 }
