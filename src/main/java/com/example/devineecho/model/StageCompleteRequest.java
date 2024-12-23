@@ -1,6 +1,11 @@
 package com.example.devineecho.model;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -11,4 +16,6 @@ public class StageCompleteRequest {
     private int level;
     private int exp;
     private int stage;
+    private List<Skill> playerSkills;
+    private List<Skill> enemySkills;
 }
