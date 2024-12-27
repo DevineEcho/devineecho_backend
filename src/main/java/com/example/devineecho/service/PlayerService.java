@@ -1,8 +1,10 @@
 package com.example.devineecho.service;
 
+import com.example.devineecho.model.Item;
 import com.example.devineecho.model.Player;
 import com.example.devineecho.model.Skill;
 import com.example.devineecho.model.StageCompleteRequest;
+import com.example.devineecho.repository.ItemRepository;
 import com.example.devineecho.repository.PlayerRepository;
 import com.example.devineecho.repository.SkillRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,13 +22,16 @@ public class PlayerService implements UserDetailsService {
 
     private final PlayerRepository playerRepository;
     private final SkillRepository skillRepository;
+    private final ItemRepository itemRepository;
     private final PasswordEncoder passwordEncoder;
 
+
     @Autowired
-    public PlayerService(PlayerRepository playerRepository, SkillRepository skillRepository, PasswordEncoder passwordEncoder) {
+    public PlayerService(PlayerRepository playerRepository, SkillRepository skillRepository, PasswordEncoder passwordEncoder, ItemRepository itemRepository) {
         this.playerRepository = playerRepository;
         this.skillRepository = skillRepository;
         this.passwordEncoder = passwordEncoder;
+        this.ItemRepository = itemRepository;
     }
 
     public List<Player> getAllPlayers() {
@@ -45,11 +50,6 @@ public class PlayerService implements UserDetailsService {
         playerRepository.deleteById(id);
     }
 
-    public void signup(Player player) {
-        player.encodeAndSetPassword(player.getPassword(), passwordEncoder);
-        playerRepository.save(player);
-    }
-
     public Player resetPlayerData(String username) {
         Player player = playerRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
@@ -58,9 +58,11 @@ public class PlayerService implements UserDetailsService {
         return playerRepository.save(player);
     }
 
-    public Optional<Player> loadPlayerData(String username) {
-        return playerRepository.findByUsername(username);
+    public Player loadPlayerData(String username) {
+        return playerRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
     }
+
 
     public Optional<Player> findByUsername(String username) {
         return playerRepository.findByUsername(username);
@@ -72,21 +74,16 @@ public class PlayerService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
     }
 
-    /**
-     * 스테이지 완료 시 플레이어와 적 스킬 정보를 저장
-     */
     public void completeStageWithSkills(String username, StageCompleteRequest request) {
         Player player = playerRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        // 플레이어의 진행 상태 업데이트
         player.updateStageProgress(request.getLevel(), request.getExp(), request.getStage());
 
-        // **플레이어 스킬 저장 (기존 스킬 제거 및 새로 저장)**
         List<Skill> existingPlayerSkills = skillRepository.findBySkillTypeAndPlayer(Skill.SkillType.PLAYER, player);
         skillRepository.deleteAll(existingPlayerSkills);
 
-        List<Skill> newPlayerSkills = request.getPlayerSkills().stream() // 플레이어 스킬 리스트를 가져옴
+        List<Skill> newPlayerSkills = request.getPlayerSkills().stream()
                 .map(skill -> Skill.builder()
                         .name(skill.getName())
                         .level(skill.getLevel())
@@ -96,7 +93,6 @@ public class PlayerService implements UserDetailsService {
                 .toList();
         skillRepository.saveAll(newPlayerSkills);
 
-        // **적 스킬 저장 (기존 적 스킬 제거 및 새로 저장)**
         List<Skill> existingEnemySkills = skillRepository.findBySkillTypeAndPlayer(Skill.SkillType.ENEMY, player);
         skillRepository.deleteAll(existingEnemySkills);
 
@@ -110,23 +106,20 @@ public class PlayerService implements UserDetailsService {
                 .toList();
         skillRepository.saveAll(newEnemySkills);
 
-        // 플레이어 정보 저장
+
         playerRepository.save(player);
     }
 
 
 
-    /**
-     * 플레이어의 스킬 업데이트
-     */
     public Player updatePlayerSkills(String username, List<Skill> newSkills) {
         Player player = playerRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        // 기존 스킬 삭제
+
         skillRepository.deleteAll(player.getSkills());
 
-        // 새 스킬 추가
+
         newSkills.forEach(skill -> {
             skill.setPlayer(player);
             skill.setSkillType(Skill.SkillType.PLAYER);
@@ -138,4 +131,73 @@ public class PlayerService implements UserDetailsService {
 
         return playerRepository.save(player);
     }
+
+    public void purchaseSkin(String username, Long itemId) {
+        Player player = playerRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("Item not found."));
+
+        if (!item.getItemType().equals(Item.ItemType.SKIN)) {
+            throw new IllegalArgumentException("Item is not a skin.");
+        }
+
+        // Check if the player can afford the item
+        if (player.getGold() >= item.getRequiredGold() || player.getDiamond() >= item.getRequiredDiamond()) {
+            if (item.getRequiredGold() > 0 && player.getGold() >= item.getRequiredGold()) {
+                player.subtractGold(item.getRequiredGold());
+            } else if (item.getRequiredDiamond() > 0 && player.getDiamond() >= item.getRequiredDiamond()) {
+                player.subtractDiamond(item.getRequiredDiamond());
+            } else {
+                throw new IllegalArgumentException("Insufficient funds.");
+            }
+        }
+
+        player.addItemToInventory(item);
+        playerRepository.save(player);
+    }
+
+
+    public void equipSkin(String username, Long itemId) {
+        Player player = playerRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("Item not found."));
+
+        if (!item.getItemType().equals(Item.ItemType.SKIN)) {
+            throw new IllegalArgumentException("Item is not a skin.");
+        }
+
+        switch (item.getSkinType()) {
+            case "CHARACTER":
+                player.setEquippedCharacterSkin(item);
+                break;
+            case "SKILL":
+                player.setEquippedSkillSkin(item);
+                break;
+            case "ENEMY":
+                player.setEquippedEnemySkin(item);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown skin type.");
+        }
+
+        playerRepository.save(player);
+    }
+
+
+    public void saveSkins(String username, Player updatedPlayer) {
+        Player player = playerRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+
+        player.setEquippedCharacterSkin(updatedPlayer.getEquippedCharacterSkin());
+        player.setEquippedSkillSkin(updatedPlayer.getEquippedSkillSkin());
+        player.setEquippedEnemySkin(updatedPlayer.getEquippedEnemySkin());
+
+        playerRepository.save(player);
+    }
+
+
 }

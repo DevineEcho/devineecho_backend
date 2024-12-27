@@ -100,4 +100,22 @@ public class PlayerController {
         Player updatedPlayer = playerService.updatePlayerSkills(username, newSkills);
         return ResponseEntity.ok(updatedPlayer);
     }
+
+    @PostMapping("/equip-skin")
+    public ResponseEntity<String> equipSkin(@RequestParam Long itemId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        playerService.equipSkin(username, itemId);
+        return ResponseEntity.ok("Skin equipped successfully!");
+    }
+
+    @PostMapping("/save-skins")
+    public ResponseEntity<String> saveSkins(@RequestBody Player updatedPlayer) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        playerService.saveSkins(username, updatedPlayer);
+        return ResponseEntity.ok("Skins saved successfully!");
+    }
+
+
 }

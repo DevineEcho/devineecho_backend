@@ -13,7 +13,7 @@ import java.util.Date;
 public class JwtUtil {
 
     private final SecretKey SECRET_KEY = Keys.hmacShaKeyFor("devineecho_secretkey_for_jwt_security".getBytes());
-    private final long EXPIRATION_TIME = 1000 * 60 * 60; // 1시간 (밀리초 단위)
+    private final long EXPIRATION_TIME = 1000 * 60 * 60; // 1시간
 
     // 토큰 생성
     public String generateToken(String username) {

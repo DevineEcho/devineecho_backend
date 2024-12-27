@@ -3,17 +3,16 @@ package com.example.devineecho.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 @Entity
 @Getter
-@Setter
 @NoArgsConstructor
 public class Player implements UserDetails {
 
@@ -27,17 +26,116 @@ public class Player implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false, unique = true)
+    private String phoneNumber;
+
+    @Column(nullable = false)
+    private String securityAnswer;
+
     private int level = 1;
     private int experience = 0;
     private int currentStage = 1;
     private int health = 100;
 
+    private int gold = 0;
+    private int diamond = 0;
+
     @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Skill> skills;
+    private List<Item> inventory = new ArrayList<>();
+
+    @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Skill> skills = new ArrayList<>();
+
+
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Skill> purchasedSkills = new ArrayList<>();
+
+
+    @OneToOne(cascade = CascadeType.ALL)
+    private Item equippedCharacterSkin; // 캐릭터 스킨
+
+    @OneToOne(cascade = CascadeType.ALL)
+    private Item equippedSkillSkin; // 스킬 스킨
+
+    @OneToOne(cascade = CascadeType.ALL)
+    private Item equippedEnemySkin; // 적 스킨
+
+    public Player(String username, String phoneNumber) {
+        if (username == null || username.isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be null or empty");
+        }
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            throw new IllegalArgumentException("Phone number cannot be null or empty");
+        }
+        this.username = username;
+        this.phoneNumber = phoneNumber;
+    }
+
+    public void encodeAndSetPassword(String rawPassword, PasswordEncoder passwordEncoder) {
+        if (rawPassword == null || rawPassword.isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be null or empty");
+        }
+        this.password = passwordEncoder.encode(rawPassword);
+    }
+
+    public void initializeSecurityAnswer(String securityAnswer) {
+        if (securityAnswer == null || securityAnswer.isEmpty()) {
+            throw new IllegalArgumentException("Security answer cannot be null or empty");
+        }
+        this.securityAnswer = securityAnswer;
+    }
+
+    public void addGold(int amount) {
+        this.gold += amount;
+    }
+
+    public void subtractGold(int amount) {
+        if (this.gold < amount) {
+            throw new IllegalArgumentException("Not enough gold");
+        }
+        this.gold -= amount;
+    }
+
+    public void addDiamond(int amount) {
+        this.diamond += amount;
+    }
+
+    public void subtractDiamond(int amount) {
+        if (this.diamond < amount) {
+            throw new IllegalArgumentException("Not enough diamonds");
+        }
+        this.diamond -= amount;
+    }
+
+
+    public void addItemToInventory(Item item) {
+        this.inventory.add(item);
+    }
+
+    public void addSkill(Skill skill) {
+        this.purchasedSkills.add(skill);
+    }
+
+
+
+    public void resetPlayerData() {
+        this.level = 1;
+        this.experience = 0;
+        this.currentStage = 1;
+        this.health = 100;
+        this.gold = 0;
+        this.diamond = 0;
+        this.inventory.clear();
+        this.purchasedSkills.clear();
+        if (this.skills != null) {
+            this.skills.clear();
+        }
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(); // 현재 권한 정보는 비어 있음
+        return List.of();
     }
 
     @Override
@@ -52,41 +150,24 @@ public class Player implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // 계정 만료 여부 설정
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // 계정 잠금 여부 설정
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // 인증 정보 만료 여부 설정
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return true; // 계정 활성화 여부 설정
+        return true;
     }
 
-
-    public void encodeAndSetPassword(String rawPassword, PasswordEncoder passwordEncoder) {
-        if (rawPassword == null || rawPassword.isEmpty()) {
-            throw new IllegalArgumentException("Password cannot be null or empty");
-        }
-        this.password = passwordEncoder.encode(rawPassword);
-    }
-
-    public void resetPlayerData() {
-        this.level = 1;
-        this.experience = 0;
-        this.currentStage = 1;
-        this.health = 100;
-        if (this.skills != null) {
-            this.skills.clear();
-        }
-    }
 
 
     public void updateStageProgress(int level, int additionalExperience, int newStage) {
@@ -96,21 +177,5 @@ public class Player implements UserDetails {
         this.level = level;
         this.experience += additionalExperience;
         this.currentStage = newStage;
-    }
-
-
-    public void updateHealth(int newHealth) {
-        if (newHealth < 0) {
-            throw new IllegalArgumentException("Health cannot be negative");
-        }
-        this.health = newHealth;
-    }
-
-
-    public void updateSkills(List<Skill> newSkills) {
-        if (this.skills != null) {
-            this.skills.clear();
-        }
-        this.skills = newSkills;
     }
 }

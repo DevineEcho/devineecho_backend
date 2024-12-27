@@ -27,7 +27,7 @@ public class Skill {
     private SkillType skillType;
 
     public enum SkillType {
-        PLAYER, // 플레이어가 업그레이드한 스킬
-        ENEMY   // 적이 업그레이드한 스킬
+        PLAYER,
+        ENEMY
     }
 }
