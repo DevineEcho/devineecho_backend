@@ -133,6 +133,35 @@ public class Player implements UserDetails {
         }
     }
 
+    public void equipCharacterSkin(Item item) {
+        if (!inventory.contains(item)) {
+            throw new IllegalArgumentException("Item is not in the player's inventory.");
+        }
+        this.equippedCharacterSkin = item;
+    }
+
+    public void equipSkillSkin(Item item) {
+        if (!inventory.contains(item)) {
+            throw new IllegalArgumentException("Item is not in the player's inventory.");
+        }
+        this.equippedSkillSkin = item;
+    }
+
+    public void equipEnemySkin(Item item) {
+        if (!inventory.contains(item)) {
+            throw new IllegalArgumentException("Item is not in the player's inventory.");
+        }
+        this.equippedEnemySkin = item;
+    }
+
+    public void saveSkins(Item characterSkin, Item skillSkin, Item enemySkin) {
+        equipCharacterSkin(characterSkin);
+        equipSkillSkin(skillSkin);
+        equipEnemySkin(enemySkin);
+    }
+
+
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();

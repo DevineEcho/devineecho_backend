@@ -82,11 +82,9 @@ public class PlayerController {
 
     @PostMapping("/stageClear")
     public ResponseEntity<String> completeStage(@RequestBody StageCompleteRequest request) {
-        // 현재 인증된 사용자의 username 가져오기
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        // 스테이지 완료 처리
         playerService.completeStageWithSkills(username, request);
         return ResponseEntity.ok("Stage complete data (including skills) saved!");
     }
@@ -113,9 +111,19 @@ public class PlayerController {
     public ResponseEntity<String> saveSkins(@RequestBody Player updatedPlayer) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        playerService.saveSkins(username, updatedPlayer);
+        playerService.saveSkins(username, updatedPlayer.getEquippedCharacterSkin(),
+                updatedPlayer.getEquippedSkillSkin(), updatedPlayer.getEquippedEnemySkin());
         return ResponseEntity.ok("Skins saved successfully!");
     }
 
+
+    @PostMapping("/purchase-item")
+    public ResponseEntity<Player> purchaseItem(@RequestParam Long itemId, @RequestParam String currencyType) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        playerService.purchaseItem(username, itemId, currencyType.toUpperCase());
+        Player updatedPlayer = playerService.getPlayerByUsername(username);
+        return ResponseEntity.ok(updatedPlayer);
+    }
 
 }
