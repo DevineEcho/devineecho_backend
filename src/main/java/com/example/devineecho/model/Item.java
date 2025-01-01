@@ -13,6 +13,10 @@ public class Item {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "player_id")
+    private Player player;
+
     @Column(nullable = false, unique = true)
     private String name;
 
