@@ -12,10 +12,9 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private final SecretKey SECRET_KEY = Keys.hmacShaKeyFor("devineecho_secretkey_for_jwt_security".getBytes());
+    private final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512); // 변경된 부분
     private final long EXPIRATION_TIME = 1000 * 60 * 60; // 1시간
 
-    // 토큰 생성
     public String generateToken(String username) {
         return Jwts.builder()
                 .setSubject(username)

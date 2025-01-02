@@ -29,23 +29,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain chain) throws ServletException, IOException {
 
         final String authorizationHeader = request.getHeader("Authorization");
-        String username = null;
-        String jwt = null;
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            chain.doFilter(request, response);
+            return; // 잘못된 헤더는 필터를 건너뛰도록 처리
+        }
 
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7);
+        final String jwt = authorizationHeader.substring(7);
+        String username = null;
+        try {
             username = jwtUtil.extractUsername(jwt);
+        } catch (Exception e) {
+            // 잘못된 JWT는 체인을 계속 진행
+            chain.doFilter(request, response);
+            return;
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(username, null, null);
-            var authResult = authenticationManager.authenticate(authToken);
 
-            if (jwtUtil.isTokenValid(jwt, authResult.getName())) {
-                SecurityContextHolder.getContext().setAuthentication(authResult);
+            // JWT 검증
+            if (jwtUtil.isTokenValid(jwt, username)) {
+                SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
         chain.doFilter(request, response);
     }
+
+
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/api/auth/");
+    }
+
 }

@@ -11,7 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.authentication.BadCredentialsException; // Import 추가
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -20,7 +20,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
-
 
 @Service
 public class AuthenticationService {
@@ -51,15 +50,20 @@ public class AuthenticationService {
     }
 
     public ResponseEntity<String> login(Player player) {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(player.getUsername(), player.getPassword())
-            );
-            String token = jwtUtil.generateToken(player.getUsername());
-            return ResponseEntity.ok(token);
-        } catch (AuthenticationException e) {
-            return ResponseEntity.status(401).body("Invalid credentials");
+        // 데이터베이스에서 사용자를 로드
+        Player storedPlayer = (Player) playerService.loadUserByUsername(player.getUsername());
+        if (storedPlayer == null) {
+            throw new BadCredentialsException("User not found");
         }
+
+        // 비밀번호 매칭
+        if (!passwordEncoder.matches(player.getPassword(), storedPlayer.getPassword())) {
+            throw new BadCredentialsException("Invalid credentials");
+        }
+
+        // JWT 생성
+        String jwt = jwtUtil.generateToken(storedPlayer.getUsername());
+        return ResponseEntity.ok(jwt);
     }
 
     public ResponseEntity<String> handleKakaoCallback(String code) {
