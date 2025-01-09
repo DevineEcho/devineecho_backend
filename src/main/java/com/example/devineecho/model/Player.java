@@ -160,6 +160,11 @@ public class Player implements UserDetails {
         equipEnemySkin(enemySkin);
     }
 
+    public List<Item> getOwnedItems() {
+        return this.inventory;
+    }
+
+
 
 
     @Override

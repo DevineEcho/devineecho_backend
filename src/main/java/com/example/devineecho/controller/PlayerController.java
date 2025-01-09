@@ -1,14 +1,11 @@
 package com.example.devineecho.controller;
 
 import com.example.devineecho.model.Player;
-import com.example.devineecho.model.Skill;
-import com.example.devineecho.model.StageCompleteRequest;
 import com.example.devineecho.service.PlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,106 +21,43 @@ public class PlayerController {
         this.playerService = playerService;
     }
 
-
     @GetMapping
     public List<Player> getAllPlayers() {
         return playerService.getAllPlayers();
     }
 
-
     @GetMapping("/{id}")
     public ResponseEntity<Player> getPlayerById(@PathVariable Long id) {
-        return playerService.getPlayerById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            Player player = playerService.getPlayerById(id);
+            return ResponseEntity.ok(player);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
-
-
-    @PostMapping
-    public ResponseEntity<Player> createPlayer(@RequestBody Player player) {
-        Player savedPlayer = playerService.savePlayer(player);
-        return ResponseEntity.ok(savedPlayer);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePlayer(@PathVariable Long id) {
-        playerService.deletePlayer(id);
-        return ResponseEntity.noContent().build();
-    }
-
-
-    @GetMapping("/profile")
-    public ResponseEntity<Player> getProfile() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        Player player = playerService.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-        return ResponseEntity.ok(player);
-    }
-
 
     @PostMapping("/reset")
     public ResponseEntity<Player> resetPlayerData() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        Player player = playerService.resetPlayerData(username);
-        return ResponseEntity.ok(player);
+        String username = getAuthenticatedUsername();
+        try {
+            Player player = playerService.resetPlayerData(username);
+            return ResponseEntity.ok(player);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/load")
     public ResponseEntity<Player> loadPlayerData() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        return playerService.loadPlayerData(username)
+        String username = getAuthenticatedUsername();
+        return playerService.findByUsername(username)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-
-    @PostMapping("/stageClear")
-    public ResponseEntity<String> completeStage(@RequestBody StageCompleteRequest request) {
+    // 인증된 사용자의 이름을 가져오는 유틸리티 메서드
+    private String getAuthenticatedUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
-        playerService.completeStageWithSkills(username, request);
-        return ResponseEntity.ok("Stage complete data (including skills) saved!");
+        return authentication.getName();
     }
-
-    @PostMapping("/updateSkill")
-    public ResponseEntity<Player> updateSkills(@RequestBody List<Skill> newSkills) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
-        // 스킬 업데이트 처리
-        Player updatedPlayer = playerService.updatePlayerSkills(username, newSkills);
-        return ResponseEntity.ok(updatedPlayer);
-    }
-
-    @PostMapping("/equip-skin")
-    public ResponseEntity<String> equipSkin(@RequestParam Long itemId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        playerService.equipSkin(username, itemId);
-        return ResponseEntity.ok("Skin equipped successfully!");
-    }
-
-    @PostMapping("/save-skins")
-    public ResponseEntity<String> saveSkins(@RequestBody Player updatedPlayer) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        playerService.saveSkins(username, updatedPlayer.getEquippedCharacterSkin(),
-                updatedPlayer.getEquippedSkillSkin(), updatedPlayer.getEquippedEnemySkin());
-        return ResponseEntity.ok("Skins saved successfully!");
-    }
-
-
-    @PostMapping("/purchase-item")
-    public ResponseEntity<Player> purchaseItem(@RequestParam Long itemId, @RequestParam String currencyType) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        playerService.purchaseItem(username, itemId, currencyType.toUpperCase());
-        Player updatedPlayer = playerService.getPlayerByUsername(username);
-        return ResponseEntity.ok(updatedPlayer);
-    }
-
 }
