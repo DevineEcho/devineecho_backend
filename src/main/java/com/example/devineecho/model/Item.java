@@ -1,5 +1,6 @@
 package com.example.devineecho.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +16,9 @@ public class Item {
 
     @ManyToOne
     @JoinColumn(name = "player_id")
+    @JsonBackReference
     private Player player;
+
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -23,7 +26,7 @@ public class Item {
     @Column(nullable = false)
     private int requiredGold;
 
-    @Column(nullable = false)
+    @Column(nullable = false)  
     private int requiredDiamond;
 
     @Column(nullable = false)

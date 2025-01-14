@@ -1,5 +1,6 @@
 package com.example.devineecho.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,6 +42,7 @@ public class Player implements UserDetails {
     private int diamond = 0;
 
     @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Item> inventory = new ArrayList<>();
 
     @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)

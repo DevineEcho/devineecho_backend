@@ -30,6 +30,7 @@ public class ItemController {
         return ResponseEntity.ok(items);
     }
 
+
     @PostMapping("/purchase")
     public ResponseEntity<Player> purchaseItem(@RequestParam Long itemId, @RequestParam String currencyType) {
         String username = getAuthenticatedUsername();
@@ -41,6 +42,7 @@ public class ItemController {
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
+
 
     private String getAuthenticatedUsername() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
