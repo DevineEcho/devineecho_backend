@@ -1,5 +1,6 @@
 package com.example.devineecho.controller;
 
+import com.example.devineecho.model.Item;
 import com.example.devineecho.model.Player;
 import com.example.devineecho.service.PlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,10 +55,19 @@ public class PlayerController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-
-    // 인증된 사용자의 이름을 가져오는 유틸리티 메서드
     private String getAuthenticatedUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication.getName();
     }
+
+    @GetMapping("/items")
+    public ResponseEntity<List<Item>> getPlayerItems() {
+        String username = getAuthenticatedUsername();
+        System.out.println("Authenticated Username: " + username);
+        return playerService.findByUsername(username)
+                .map(player -> ResponseEntity.ok(player.getOwnedItems()))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+
 }

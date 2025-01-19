@@ -26,7 +26,7 @@ public class Item {
     @Column(nullable = false)
     private int requiredGold;
 
-    @Column(nullable = false)  
+    @Column(nullable = false)
     private int requiredDiamond;
 
     @Column(nullable = false)

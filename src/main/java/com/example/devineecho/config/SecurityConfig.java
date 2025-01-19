@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/items/**").permitAll()
+                        .requestMatchers("/api/player/items/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
