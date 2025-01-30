@@ -1,5 +1,6 @@
-package com.example.devineecho.model;
+package com.example.devineecho.dto;
 
+import com.example.devineecho.model.Skill;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -2,7 +2,7 @@ package com.example.devineecho.service;
 
 import com.example.devineecho.model.Player;
 import com.example.devineecho.model.Skill;
-import com.example.devineecho.model.StageCompleteRequest;
+import com.example.devineecho.dto.StageCompleteRequest;
 import com.example.devineecho.repository.PlayerRepository;
 import com.example.devineecho.repository.SkillRepository;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,5 +1,6 @@
 package com.example.devineecho.service;
 
+import com.example.devineecho.exception.InsufficientCurrencyException;
 import com.example.devineecho.model.Item;
 import com.example.devineecho.model.Player;
 import com.example.devineecho.repository.ItemRepository;
@@ -19,7 +20,7 @@ public class ItemService {
     }
 
     public List<Item> getAllItems() {
-        return itemRepository.findAll(); // 모든 아이템 가져오기
+        return itemRepository.findAll();
     }
 
     public Item getItemById(Long itemId) {
@@ -30,26 +31,28 @@ public class ItemService {
     public void purchaseItem(Player player, Long itemId, String currencyType) {
         Item item = getItemById(itemId);
 
-        // 가격 검증
-        int cost = currencyType.equals("GOLD") ? item.getRequiredGold() : item.getRequiredDiamond();
-        if (cost > 0) {
-            if (currencyType.equals("GOLD") && player.getGold() < cost) {
-                throw new IllegalArgumentException("골드가 부족합니다");
-            } else if (currencyType.equals("DIAMOND") && player.getDiamond() < cost) {
-                throw new IllegalArgumentException("다이아가 부족합니다");
+        if ("GOLD".equals(currencyType) && item.getRequiredGold() > 0) {
+            if (player.getGold() < item.getRequiredGold()) {
+                int missingGold = item.getRequiredGold() - player.getGold();
+                throw new InsufficientCurrencyException("골드", missingGold);
             }
+            player.subtractGold(item.getRequiredGold());
+        } else if ("DIAMOND".equals(currencyType) && item.getRequiredDiamond() > 0) {
+            if (player.getDiamond() < item.getRequiredDiamond()) {
+                int missingDiamond = item.getRequiredDiamond() - player.getDiamond();
+                throw new InsufficientCurrencyException("다이아몬드", missingDiamond);
+            }
+            player.subtractDiamond(item.getRequiredDiamond());
         } else {
-            throw new IllegalArgumentException("재화가 부족합니다");
+            throw new IllegalArgumentException("구매할 수 없는 아이템입니다.");
         }
 
-        // 재화 차감
-        if (currencyType.equals("GOLD")) {
-            player.subtractGold(cost);
-        } else {
-            player.subtractDiamond(cost);
-        }
 
-        // 아이템 인벤토리에 추가
+        item.assignToPlayer(player);
         player.addItemToInventory(item);
+
+
+        itemRepository.save(item);
     }
+
 }

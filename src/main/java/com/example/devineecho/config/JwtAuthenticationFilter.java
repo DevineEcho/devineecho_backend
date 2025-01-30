@@ -30,16 +30,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String authorizationHeader = request.getHeader("Authorization");
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            System.out.println("Authorization header missing or invalid");
             chain.doFilter(request, response);
-            return; // 잘못된 헤더는 필터를 건너뛰도록 처리
+            return;
         }
 
         final String jwt = authorizationHeader.substring(7);
         String username = null;
+
         try {
             username = jwtUtil.extractUsername(jwt);
+            System.out.println("Extracted username: " + username);
         } catch (Exception e) {
-            // 잘못된 JWT는 체인을 계속 진행
+            System.out.println("Failed to extract username from token: " + e.getMessage());
             chain.doFilter(request, response);
             return;
         }
@@ -48,9 +51,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(username, null, null);
 
-            // JWT 검증
             if (jwtUtil.isTokenValid(jwt, username)) {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                System.out.println("Token valid. Authentication set for user: " + username);
+            } else {
+                System.out.println("Invalid token for user: " + username);
             }
         }
         chain.doFilter(request, response);
@@ -61,7 +66,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/api/auth/");
+        return path.startsWith("/api/auth/") || path.startsWith("/api/player/");
     }
+
 
 }
