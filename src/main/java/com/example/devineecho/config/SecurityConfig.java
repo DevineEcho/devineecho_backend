@@ -40,13 +40,14 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/items/**", "/api/players/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/items/**", "/api/players/**", "/api/skills/**").permitAll() // 스킬 경로 추가
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
 
 
         return http.build();

@@ -2,6 +2,7 @@ package com.example.devineecho.service;
 
 import com.example.devineecho.config.JwtUtil;
 import com.example.devineecho.model.Player;
+import com.example.devineecho.model.Skill;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,16 +10,16 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.authentication.BadCredentialsException; // Import 추가
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -26,42 +27,49 @@ public class AuthenticationService {
 
     private final PlayerService playerService;
     private final JwtUtil jwtUtil;
-    private final AuthenticationManager authenticationManager;
+    private final SkillService skillService;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public AuthenticationService(PlayerService playerService, JwtUtil jwtUtil,
-                                 AuthenticationManager authenticationManager,
-                                 PasswordEncoder passwordEncoder) {
+    public AuthenticationService(PlayerService playerService, SkillService skillService, JwtUtil jwtUtil,
+                                  PasswordEncoder passwordEncoder) {
         this.playerService = playerService;
+        this.skillService = skillService;
         this.jwtUtil = jwtUtil;
-        this.authenticationManager = authenticationManager;
         this.restTemplate = new RestTemplate();
         this.objectMapper = new ObjectMapper();
         this.passwordEncoder = passwordEncoder;
     }
 
+
     public void signup(Player player, String rawPassword, String securityAnswer) {
         player.encodeAndSetPassword(rawPassword, passwordEncoder);
-        player.initializeSecurityAnswer(securityAnswer); // 캡슐화된 메서드 사용
+        player.initializeSecurityAnswer(securityAnswer);
+
+
+        List<Skill> defaultSkills = new ArrayList<>();
+        defaultSkills.add(skillService.getSkillByName("HolyCircle"));
+        defaultSkills.add(skillService.getSkillByName("SaintAura"));
+        defaultSkills.add(skillService.getSkillByName("GodsHammer"));
+
+        player.equipDefaultSkills(defaultSkills);
+
         playerService.savePlayer(player);
     }
 
+
     public ResponseEntity<String> login(Player player) {
-        // 데이터베이스에서 사용자를 로드
         Player storedPlayer = (Player) playerService.loadUserByUsername(player.getUsername());
         if (storedPlayer == null) {
             throw new BadCredentialsException("User not found");
         }
 
-        // 비밀번호 매칭
         if (!passwordEncoder.matches(player.getPassword(), storedPlayer.getPassword())) {
             throw new BadCredentialsException("Invalid credentials");
         }
 
-        // JWT 생성
         String jwt = jwtUtil.generateToken(storedPlayer.getUsername());
         return ResponseEntity.ok(jwt);
     }

@@ -2,7 +2,6 @@ package com.example.devineecho.service;
 
 import com.example.devineecho.model.Player;
 import com.example.devineecho.model.Skill;
-import com.example.devineecho.dto.StageCompleteRequest;
 import com.example.devineecho.repository.PlayerRepository;
 import com.example.devineecho.repository.SkillRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +10,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,12 +19,14 @@ public class PlayerService implements UserDetailsService {
 
     private final PlayerRepository playerRepository;
     private final SkillRepository skillRepository;
+    private final SkillService skillService;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public PlayerService(PlayerRepository playerRepository, SkillRepository skillRepository, PasswordEncoder passwordEncoder) {
+    public PlayerService(PlayerRepository playerRepository, SkillRepository skillRepository, SkillService skillService, PasswordEncoder passwordEncoder) {
         this.playerRepository = playerRepository;
         this.skillRepository = skillRepository;
+        this.skillService = skillService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -51,10 +52,27 @@ public class PlayerService implements UserDetailsService {
     }
 
     public Player resetPlayerData(String username) {
-        Player player = findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-        player.resetPlayerData();
-        return savePlayer(player);
+        Player player = playerRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+
+        player.updateLevel(1);
+        player.updateExperience(0);
+        player.updateCurrentStage(1);
+        player.updateHealth(100);
+        player.updateGold(0);
+        player.updateDiamond(0);
+        player.getInventory().clear();
+        player.getPurchasedSkills().clear();
+
+        List<Skill> defaultSkills = new ArrayList<>();
+        defaultSkills.add(skillService.getSkillByName("HolyCircle"));
+        defaultSkills.add(skillService.getSkillByName("SaintAura"));
+        defaultSkills.add(skillService.getSkillByName("GodsHammer"));
+
+        player.getEquippedSkills().clear();
+        player.getEquippedSkills().addAll(defaultSkills);
+
+        return playerRepository.save(player);
     }
 
     public Player loadPlayerData(String username) {
@@ -66,27 +84,5 @@ public class PlayerService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-    }
-
-    public void completeStageWithSkills(String username, StageCompleteRequest request) {
-        Player player = findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-
-        player.updateStageProgress(request.getLevel(), request.getExp(), request.getStage());
-
-        List<Skill> existingPlayerSkills = skillRepository.findBySkillTypeAndPlayer(Skill.SkillType.PLAYER, player);
-        skillRepository.deleteAll(existingPlayerSkills);
-
-        List<Skill> newPlayerSkills = request.getPlayerSkills().stream()
-                .map(skill -> Skill.builder()
-                        .name(skill.getName())
-                        .level(skill.getLevel())
-                        .skillType(Skill.SkillType.PLAYER)
-                        .player(player)
-                        .build())
-                .toList();
-        skillRepository.saveAll(newPlayerSkills);
-
-        savePlayer(player);
     }
 }

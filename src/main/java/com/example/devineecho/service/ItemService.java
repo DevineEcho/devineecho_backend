@@ -36,22 +36,19 @@ public class ItemService {
                 int missingGold = item.getRequiredGold() - player.getGold();
                 throw new InsufficientCurrencyException("골드", missingGold);
             }
-            player.subtractGold(item.getRequiredGold());
+            player.updateGold(player.getGold() - item.getRequiredGold());
         } else if ("DIAMOND".equals(currencyType) && item.getRequiredDiamond() > 0) {
             if (player.getDiamond() < item.getRequiredDiamond()) {
                 int missingDiamond = item.getRequiredDiamond() - player.getDiamond();
                 throw new InsufficientCurrencyException("다이아몬드", missingDiamond);
             }
-            player.subtractDiamond(item.getRequiredDiamond());
+            player.updateDiamond(player.getDiamond() - item.getRequiredDiamond());
         } else {
             throw new IllegalArgumentException("구매할 수 없는 아이템입니다.");
         }
 
-
         item.assignToPlayer(player);
         player.addItemToInventory(item);
-
-
         itemRepository.save(item);
     }
 
