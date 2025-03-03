@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ItemService {
@@ -26,6 +28,16 @@ public class ItemService {
     public Item getItemById(Long itemId) {
         return itemRepository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("해당하는 아이템 없음"));
+    }
+    public Optional<Item> getItemById2(Long itemId) {
+        return itemRepository.findById(itemId);
+    }
+
+    // ✅ 특정 타입의 아이템만 조회
+    public List<Item> getPlayerItemsByType(Player player, Item.ItemType type) {
+        return player.getInventory().stream()
+                .filter(item -> item.getItemType() == type)
+                .collect(Collectors.toList());
     }
 
     public void purchaseItem(Player player, Long itemId, String currencyType) {

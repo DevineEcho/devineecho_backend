@@ -1,5 +1,6 @@
 package com.example.devineecho.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,8 +17,10 @@ public class Skill {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "player_id", nullable = false)
+    @JoinColumn(name = "player_id", nullable = true)
+    @JsonBackReference
     private Player player;
+
 
     private String name;
 
@@ -30,4 +33,12 @@ public class Skill {
         PLAYER,
         ENEMY
     }
+
+    public Skill(String name, int level, SkillType skillType) {
+        this.name = name;
+        this.level = level;
+        this.skillType = skillType;
+    }
+
+
 }

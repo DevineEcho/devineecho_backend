@@ -17,6 +17,7 @@ public class StageCompleteRequest {
     private int level;
     private int exp;
     private int stage;
+    private int health;
     private List<Skill> playerSkills;
     private List<Skill> enemySkills;
 }

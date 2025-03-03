@@ -20,10 +20,10 @@ public class Item {
     private Player player;
 
     @Column(nullable = false, unique = true)
-    private String name; // 이미지명 (영어)
+    private String name;
 
     @Column(nullable = false)
-    private String displayName; // 아이템명 (한글)
+    private String displayName;
 
     @Column(nullable = false)
     private int requiredGold;
@@ -41,7 +41,7 @@ public class Item {
     @Column
     private String targetSkill;
 
-    @Column(length = 1000) // 설명은 최대 1000자로 설정
+    @Column(length = 1000)
     private String description;
 
     public enum ItemType {

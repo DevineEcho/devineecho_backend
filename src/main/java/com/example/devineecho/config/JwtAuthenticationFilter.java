@@ -30,7 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String authorizationHeader = request.getHeader("Authorization");
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            System.out.println("Authorization header missing or invalid");
+            System.out.println("헤더 없음");
             chain.doFilter(request, response);
             return;
         }
@@ -40,9 +40,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             username = jwtUtil.extractUsername(jwt);
-            System.out.println("Extracted username: " + username);
         } catch (Exception e) {
-            System.out.println("Failed to extract username from token: " + e.getMessage());
+            System.out.println("토큰에서 유저네임 추출 실패" + e.getMessage());
             chain.doFilter(request, response);
             return;
         }
@@ -53,9 +52,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (jwtUtil.isTokenValid(jwt, username)) {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                System.out.println("Token valid. Authentication set for user: " + username);
             } else {
-                System.out.println("Invalid token for user: " + username);
+                System.out.println("유효하지않은 토큰 " + username);
             }
         }
         chain.doFilter(request, response);

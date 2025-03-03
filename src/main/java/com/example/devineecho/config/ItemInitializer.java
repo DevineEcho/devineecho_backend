@@ -111,9 +111,8 @@ public class ItemInitializer {
             for (Item item : items) {
                 if (!itemRepository.existsByName(item.getName())) {
                     itemRepository.save(item);
-                    System.out.println("Added item: " + item.getDisplayName());
                 } else {
-                    System.out.println("Item already exists: " + item.getDisplayName());
+                    System.out.println("이미 존재하는아이템" + item.getDisplayName());
                 }
             }
         };

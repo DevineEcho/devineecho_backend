@@ -24,21 +24,39 @@ public class SkillController {
         this.skillService = skillService;
         this.playerService = playerService;
     }
-
+    
     @GetMapping
-    public List<Skill> getAllSkills() {
-        return skillService.getAllSkills();
-    }
+    public ResponseEntity<List<Skill>> getOwnedSkills() {
+        String username = getAuthenticatedUsername();
+        return playerService.findByUsername(username)
+                .map(player -> {
+                    List<Skill> equippedSkills = player.getEquippedSkills();
+                    List<Skill> ownedSkills = player.getPurchasedSkills()
+                            .stream()
+                            .filter(skill -> !equippedSkills.contains(skill))
+                            .filter(skill -> skill.getSkillType() != Skill.SkillType.ENEMY)
+                            .toList();
 
-    @PostMapping
-    public Skill createSkill(@RequestBody Skill skill) {
-        return skillService.saveSkill(skill);
+                    return ResponseEntity.ok(ownedSkills);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSkill(@PathVariable Long id) {
-        skillService.deleteSkill(id);
-        return ResponseEntity.noContent().build();
+    
+    @GetMapping("/equipped-skills")
+    public ResponseEntity<List<Skill>> getEquippedSkills() {
+        String username = getAuthenticatedUsername();
+        return playerService.findByUsername(username)
+                .map(player -> {
+                    List<Skill> equippedSkills = player.getEquippedSkills();
+                    
+                    if (equippedSkills.isEmpty()) {
+                        equippedSkills = skillService.getDefaultSkills(player);
+                        player.updateEquippedSkills(equippedSkills);
+                        playerService.savePlayer(player);
+                    }
+                    return ResponseEntity.ok(equippedSkills);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("/equip-skills")
@@ -47,30 +65,11 @@ public class SkillController {
         return playerService.findByUsername(username)
                 .map(player -> {
                     skillService.equipSkills(player, equippedSkills);
-
-                    // Holy Circle이 없는 경우 기본으로 추가
-                    if (!player.getSkills().stream().anyMatch(skill -> skill.getName().equals("Holy Circle"))) {
-                        Skill holyCircle = skillService.getSkillByName("Holy Circle");
-                        if (holyCircle != null) {
-                            player.getSkills().add(holyCircle);
-                        }
-                    }
-
                     playerService.savePlayer(player);
-                    return ResponseEntity.ok("Skills saved successfully");
+                    return ResponseEntity.ok("스킬 장착 완료");
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
-
-
-    @GetMapping("/equipped-skills")
-    public ResponseEntity<List<Skill>> getEquippedSkills() {
-        String username = getAuthenticatedUsername();
-        return playerService.findByUsername(username)
-                .map(player -> ResponseEntity.ok(player.getSkills()))
-                .orElse(ResponseEntity.notFound().build());
-    }
-
 
     private String getAuthenticatedUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

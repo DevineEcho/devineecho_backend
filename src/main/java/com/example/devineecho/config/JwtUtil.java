@@ -6,14 +6,17 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
 import java.util.Date;
 
+import javax.crypto.SecretKey;
+import java.util.Base64;
 @Component
 public class JwtUtil {
 
-    private final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512); // 변경된 부분
-    private final long EXPIRATION_TIME = 1000 * 60 * 60; // 1시간
+    private static final String RAW_SECRET_KEY = "your-secure-secret-key-your-secure-secret-key-your-secure-secret-key!";
+    private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(Base64.getEncoder().encodeToString(RAW_SECRET_KEY.getBytes()).getBytes());
+
+    private final long EXPIRATION_TIME = 1000 * 60 * 60;
 
     public String generateToken(String username) {
         return Jwts.builder()

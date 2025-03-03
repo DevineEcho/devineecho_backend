@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthenticationController {
@@ -20,13 +22,10 @@ public class AuthenticationController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody PlayerSignupRequest request) {
-        // Player 객체 생성 및 필드 설정
         Player player = new Player(request.getUsername(), request.getPhoneNumber());
         authenticationService.signup(player, request.getPassword(), request.getSecurityAnswer());
-        return ResponseEntity.ok("User registered successfully!");
+        return ResponseEntity.ok("유저등록 완료");
     }
-
-
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody Player player) {
@@ -34,7 +33,8 @@ public class AuthenticationController {
     }
 
     @GetMapping("/kakao/callback")
-    public ResponseEntity<String> kakaoCallback(@RequestParam String code) {
+    public ResponseEntity<Map<String, String>> kakaoLogin(@RequestParam("code") String code) {
         return authenticationService.handleKakaoCallback(code);
     }
+
 }

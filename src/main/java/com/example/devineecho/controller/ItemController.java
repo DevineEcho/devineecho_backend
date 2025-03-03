@@ -11,7 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/items")
@@ -27,39 +27,78 @@ public class ItemController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Item>> getItems() {
-        List<Item> items = itemService.getAllItems();
-        return ResponseEntity.ok(items);
-    }
-
-    @PostMapping("/purchase")
-    public ResponseEntity<?> purchaseItem(@RequestParam Long itemId, @RequestParam String currencyType) {
-        String username = getAuthenticatedUsername();
-        return playerService.findByUsername(username)
-                .map(player -> {
-                    try {
-                        itemService.purchaseItem(player, itemId, currencyType.toUpperCase());
-                        Player updatedPlayer = playerService.savePlayer(player);
-                        return ResponseEntity.ok(updatedPlayer);
-                    } catch (InsufficientCurrencyException e) {
-                        return ResponseEntity.badRequest().body(
-                                Map.of(
-                                        "message", e.getMessage(),
-                                        "missingCurrency", e.getCurrencyType(),
-                                        "missingAmount", e.getMissingAmount()
-                                )
-                        );
-                    }
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<List<Item>> getAllItems() {
+        return ResponseEntity.ok(itemService.getAllItems());
     }
 
     @GetMapping("/owned")
     public ResponseEntity<List<Item>> getOwnedItems() {
         String username = getAuthenticatedUsername();
         return playerService.findByUsername(username)
-                .map(player -> ResponseEntity.ok(player.getOwnedItems()))
+                .map(player -> ResponseEntity.ok(player.getInventory()))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/equipment")
+    public ResponseEntity<List<Item>> getEquipmentItems() {
+        String username = getAuthenticatedUsername();
+        return playerService.findByUsername(username)
+                .map(player -> ResponseEntity.ok(itemService.getPlayerItemsByType(player, Item.ItemType.EQUIPMENT)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/skins")
+    public ResponseEntity<List<Item>> getSkinItems() {
+        String username = getAuthenticatedUsername();
+        return playerService.findByUsername(username)
+                .map(player -> ResponseEntity.ok(itemService.getPlayerItemsByType(player, Item.ItemType.SKIN)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/equip-equipment")
+    public ResponseEntity<Player> equipEquipment(@RequestParam Long itemId) {
+        String username = getAuthenticatedUsername();
+        return playerService.findByUsername(username)
+                .map(player -> {
+                    Optional<Item> itemOpt = itemService.getItemById2(itemId);
+                    if (itemOpt.isPresent()) {
+                        player.updatePlayerCharacterSkin(itemOpt.get());
+                        Player updatedPlayer = playerService.saveAndMergePlayer(player);
+                        return ResponseEntity.ok(updatedPlayer);
+                    }
+                    return ResponseEntity.notFound().<Player>build();
+                }).orElseGet(() -> ResponseEntity.notFound().<Player>build());
+    }
+
+    @PostMapping("/equip-skin")
+    public ResponseEntity<Player> equipSkin(@RequestParam Long itemId) {
+        String username = getAuthenticatedUsername();
+        return playerService.findByUsername(username)
+                .map(player -> {
+                    Optional<Item> itemOpt = itemService.getItemById2(itemId);
+                    if (itemOpt.isPresent()) {
+                        player.updatePlayerSkillSkin(itemOpt.get());
+                        Player updatedPlayer = playerService.saveAndMergePlayer(player);
+                        return ResponseEntity.ok(updatedPlayer);
+                    }
+                    return ResponseEntity.notFound().<Player>build();
+                }).orElseGet(() -> ResponseEntity.notFound().<Player>build());
+    }
+
+    @PostMapping("/buy")
+    public ResponseEntity<?> buyItem(@RequestParam Long itemId, @RequestParam String currencyType) {
+        String username = getAuthenticatedUsername();
+        return playerService.findByUsername(username)
+                .map(player -> {
+                    try {
+                        itemService.purchaseItem(player, itemId, currencyType);
+                        return ResponseEntity.ok(playerService.saveAndMergePlayer(player));
+                    } catch (InsufficientCurrencyException e) {
+                        return ResponseEntity.badRequest().body(e.getMessage());
+                    } catch (IllegalArgumentException e) {
+                        return ResponseEntity.badRequest().body(e.getMessage());
+                    }
+                }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     private String getAuthenticatedUsername() {

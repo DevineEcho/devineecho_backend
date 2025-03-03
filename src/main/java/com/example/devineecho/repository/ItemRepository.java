@@ -8,5 +8,4 @@ import java.util.List;
 public interface ItemRepository extends JpaRepository<Item, Long> {
     boolean existsByName(String name);
 
-    List<Item> findByPlayerId(Long playerId);
 }
