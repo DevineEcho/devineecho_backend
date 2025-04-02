@@ -86,15 +86,14 @@ public class SkillService {
                 .orElse(null);
 
         if (skill != null) {
-            return skill; // 이미 있으면 반환
+            return skill;
         }
 
-        // ✅ 새 스킬 생성 (플레이어 ID 포함)
         Skill newSkill = new Skill();
         newSkill.setName(name);
         newSkill.setLevel(1);
         newSkill.setSkillType(Skill.SkillType.PLAYER);
-        newSkill.setPlayer(player); // ✅ 플레이어와 연결
+        newSkill.setPlayer(player);
 
         return skillRepository.save(newSkill);
     }
@@ -104,7 +103,7 @@ public class SkillService {
 
 
     public List<Skill> getDefaultSkills(Player player) {
-        System.out.println("✅ 기본 스킬 가져오기 실행됨 for player: " + player.getUsername());
+        System.out.println("기본 스킬 가져오기 실행됨 for player: " + player.getUsername());
 
         List<Skill> defaultSkills = Arrays.asList(
                 getOrCreateSkill("HolyCircle", player),
@@ -112,7 +111,7 @@ public class SkillService {
                 getOrCreateSkill("GodsHammer", player)
         );
 
-        player.updatePurchasedSkills(defaultSkills); // ✅ 구매한 스킬 목록 업데이트
+        player.updatePurchasedSkills(defaultSkills);
         return defaultSkills;
     }
 

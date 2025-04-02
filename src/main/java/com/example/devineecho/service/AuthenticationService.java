@@ -104,16 +104,13 @@ public class AuthenticationService {
 
 
 
-    /**
-     * 🔹 카카오 Access Token 요청
-     */
     private String fetchKakaoToken(String code) {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
-        params.add("client_id", "405b1c838633f69a637a66b528da28a4"); // ✅ 여기에 실제 카카오 앱 REST API 키 사용
+        params.add("client_id", "405b1c838633f69a637a66b528da28a4");
         params.add("redirect_uri", "http://localhost:3000/login/kakao");
         params.add("code", code);
 
@@ -123,7 +120,7 @@ public class AuthenticationService {
                 "https://kauth.kakao.com/oauth/token", request, String.class
         );
 
-        System.out.println("🔍 카카오 토큰 응답: " + response.getBody()); // ✅ 디버깅 출력 추가
+        System.out.println("🔍 카카오 토큰 응답: " + response.getBody());
 
         if (response.getStatusCode() != HttpStatus.OK) {
             throw new RuntimeException("카카오 토큰 요청 실패: " + response.getBody());
@@ -132,12 +129,6 @@ public class AuthenticationService {
         return response.getBody();
     }
 
-
-
-
-    /**
-     * 🔹 카카오 사용자 정보 요청
-     */
     private String fetchKakaoUserInfo(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + accessToken);
@@ -157,10 +148,6 @@ public class AuthenticationService {
     }
 
 
-
-    /**
-     * 🔹 Access Token 추출
-     */
     private String extractAccessToken(String responseBody) {
         try {
             JsonNode jsonNode = objectMapper.readTree(responseBody);
@@ -190,7 +177,6 @@ public class AuthenticationService {
         }
     }
 
-    // ✅ 랜덤 전화번호 생성 함수 (010-XXXX-XXXX 형식)
     private String generateRandomPhoneNumber() {
         Random random = new Random();
         int num1 = random.nextInt(9000) + 1000; // 1000 ~ 9999
@@ -198,11 +184,9 @@ public class AuthenticationService {
         return "010-" + num1 + "-" + num2;
     }
 
-    /**
-     * 🔹 신규 카카오 회원 자동 등록
-     */
+
     private Player registerNewKakaoUser(String kakaoId, String phoneNumber) {
-        System.out.println("🚀 새로운 카카오 유저 생성 중...");
+        System.out.println("새로운 카카오 유저 생성 중");
 
         if (phoneNumber == null || phoneNumber.isEmpty()) {
             phoneNumber = generateRandomPhoneNumber();
@@ -223,16 +207,16 @@ public class AuthenticationService {
         String randomPassword = UUID.randomUUID().toString().substring(0, 12);
         String encodedPassword = passwordEncoder.encode(randomPassword);
 
-        // ✅ 기본 securityAnswer 설정
+
         String defaultSecurityAnswer = "카카오 로그인";
 
         Player newPlayer = new Player(uniqueUsername, phoneNumber);
         newPlayer.updateKakaoId(kakaoId);
         newPlayer.updatePassword(randomPassword, passwordEncoder);
-        newPlayer.initializeSecurityAnswer(defaultSecurityAnswer); // ✅ 기본값 추가
+        newPlayer.initializeSecurityAnswer(defaultSecurityAnswer);
 
         Player savedPlayer = playerService.savePlayer(newPlayer);
-        System.out.println("✅ 신규 카카오 유저 등록 완료: " + savedPlayer.getUsername());
+        System.out.println("신규 카카오 유저 등록 완료: " + savedPlayer.getUsername());
 
         return savedPlayer;
     }

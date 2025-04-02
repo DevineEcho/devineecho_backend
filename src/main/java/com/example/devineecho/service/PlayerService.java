@@ -24,7 +24,7 @@ public class PlayerService implements UserDetailsService {
     private final PlayerRepository playerRepository;
     private final SkillRepository skillRepository;
 
-    private final EntityManager entityManager; // 🔥 merge()를 사용하기 위해 추가
+    private final EntityManager entityManager;
     private final SkillService skillService;
     private final PasswordEncoder passwordEncoder;
 
@@ -50,7 +50,6 @@ public class PlayerService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Player not found with ID: " + id));
     }
 
-    // ✅ 카카오 ID로 플레이어 찾기
     public Optional<Player> findByKakaoId(String kakaoId) {
         return playerRepository.findByKakaoId(kakaoId);
     }
@@ -59,9 +58,9 @@ public class PlayerService implements UserDetailsService {
         return playerRepository.save(player);
     }
 
-    // ✅ 강제 병합하여 데이터베이스에 반영
+
     public Player saveAndMergePlayer(Player player) {
-        Player mergedPlayer = entityManager.merge(player); // 🔥 병합하여 영속성 보장
+        Player mergedPlayer = entityManager.merge(player);
         playerRepository.save(mergedPlayer);
         return mergedPlayer;
     }
@@ -84,14 +83,11 @@ public class PlayerService implements UserDetailsService {
         player.getInventory().clear();
         player.getPurchasedSkills().clear();
 
-        // ✅ 기존 장착 스킬 유지 (HolyCircle 기본 제공)
         List<Skill> equippedSkillsBeforeReset = new ArrayList<>(player.getEquippedSkills());
 
-        // ✅ 기존 보유 & 장착한 스킬 제거
         player.getPurchasedSkills().clear();
         player.getEquippedSkills().clear();
 
-        // ✅ HolyCircle 기본 제공 (중복 추가 방지)
         Skill holyCircle = skillRepository.findFirstByName("HolyCircle")
                 .orElseThrow(() -> new RuntimeException("HolyCircle not found"));
 
@@ -99,7 +95,6 @@ public class PlayerService implements UserDetailsService {
             equippedSkillsBeforeReset.add(holyCircle);
         }
 
-        // ✅ 기존 장착한 스킬 유지 (중복 없이 추가)
         for (Skill skill : equippedSkillsBeforeReset) {
             if (!player.getPurchasedSkills().contains(skill)) {
                 player.getPurchasedSkills().add(skill);
@@ -118,14 +113,13 @@ public class PlayerService implements UserDetailsService {
         player.updateCurrentStage(request.getStage());
         player.updateLevel(request.getLevel());
         player.updateExperience(request.getExp());
-        player.updateHealth(request.getHealth()); // ✅ 현재 체력도 저장
+        player.updateHealth(request.getHealth());
 
-        // ✅ 플레이어 스킬 업데이트
+
         List<Skill> newSkills = request.getPlayerSkills();
         newSkills.forEach(skill -> skill.setPlayer(player));
         player.updateEquippedSkills(newSkills);
 
-        // ✅ 적 스킬 업데이트
         List<Skill> newEnemySkills = request.getEnemySkills();
         newEnemySkills.forEach(skill -> skill.setPlayer(player));
         player.updateEnemySkills(newEnemySkills);
